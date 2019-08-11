@@ -101,6 +101,7 @@ tornado为我们提供了一个tornado.options 模块
          		2. **tornado.options.options**
 功能：全局的options对象，所有定义的选项变量都会作为给对象的属性
        
+
 实例：
        
        ```python
@@ -228,20 +229,21 @@ if __name__=='__main__':
 '''
 ```
 
-## 基础工程（请求与响应）
+# 请求与响应
 
-### tornado 工程模板
+## tornado 工程模板
 
-![基础工程模块分类](/home/tarena/桌面/tornado/images/基础工程模块分类.png)
+![基础工程模块分类](./images/基础工程模块分类.png)
 
-### application文件 
+## application文件
 
 作用：URL映射文件
-![appliciton文件](/home/tarena/桌面/tornado/images/appliciton文件.png)
+![appliciton文件](./images/appliciton文件.png)
 
-#### settings变量
+### settings变量
 
-**debug**
+#### **debug**
+
 作用：设置tornado是否工作在调试模式下，默认为False即工作在生产模式下
 True特性：
 
@@ -258,12 +260,15 @@ True特性：
 4. 提供追踪信息(不用太注意)
     - 可以通过serve_traceback=True设置
 
-**static_path**
+#### **static_path**
+
 作用：设置静态文件目录
-**template_path** 
+
+#### **template_path**
+
 作用：设置模板文件的目录
 
-#### 路由
+### 路由
 
 1. 普通路由
 
@@ -313,6 +318,8 @@ class IndexHandler(RequestHandler):
 
 #### 1. 利用http协议向服务器传递参数（正则分组取值）
 
+- **提取url的特定部分**
+
 ```Python
 URL=http://127.0.0.1:8000/liuyifei/sunck/good/nice/
 从中提取参数，sunck,good,nice
@@ -341,20 +348,21 @@ class LiuyifeiHandler(RequestHandler):
         self.write('liuyifei is a nice women')
 ```
 
-#### 查询字符串（get方式传递参数）
+#### 2. 查询字符串（get方式传递参数）
 
-**使用函数：**name=self.get_query_argument(name,default=ARG_DEFAULT,strip=True)
-**参数**：
+- **使用函数：name=self.get_query_argument(name,default=ARG_DEFAULT,strip=True)**
+  **参数**：
 
-1. name，从get请求参数字符串中返回指定参数的值
+1. **name** 从get请求参数字符串中返回指定参数的值
     - 如果出现多个同名参数，返回最后一个值
-2. default 设置未传name参数的值，使用default的值
-    - 如果default没有设置，那么就会抛出一个tornado.web.MisssingArgumentError异常
-3. strip 表示是否过滤掉两边空白字符，默认为True过滤
+2. **default** 设置未传name参数的值，使用default的值
+    - 如果default没有设置，那么就会抛出一个tornado.web.MissingArgumentError异常
+3. **strip** 表示是否过滤掉两边空白字符，默认为True过滤
 
 实例
 
 ```Python
+#url:127.0.0.1:9000/?a=1&b=1&c=  1
 #application.py
 (r'/zhangmanyu',index.ZhangmanyuHandler)
  
@@ -366,18 +374,369 @@ class ZhangmanyuHandler(RequestHandler):
         c = self.get_query_argument('c')
         print(a,b,'*'+c+'*')
         self.write('zhangmanyu is good women')
+#结果： a b *c*
 ```
 
+**取一个变量2个值的情况url（172.0.0.1:8000?a=1&a=2）**
 
+- 使用函数：name_list=self.get_query_arguments(name,strip=True)
+- 得到一个列表，没有默认值
 
-请求体携带参数(post方式传递参数)
+#### 3. 请求体携带参数(post方式传递参数)
 
-即可以获取get请求，也可以获取post请求
+- **在http报文头中增加字段**
 
-在http报文头中增加字段
+- **使用函数：name=self.get_body_argument(name,default=ARG_DEFAULT,strip=True)参数同上**
+- **多选(复选框)使用：name_list=self.get_body_arguments(name,strip=True)**
+  实例
 
-提取url的特定部分
+```html
+//postfile.html
+<form action="/postfile" method="post">
+        姓名：<input type="text" name="username"/>
+        <hr/>
+        密码：<input type="password" name="passwd"/>
+        <hr/>
+        爱好：
+        <input type="checkbox" value="power" name="hobby">权利
+        <input type="checkbox" value="money" name="hobby">金钱
+        <input type="checkbox" value="book" name="hobby">书
+        <input type="submit" value="登录"/>
+    </form>
+```
 
-request对象
+```python
+#application.py
+(r'/postfile',index.PostFileHandler)
 
-tornado.httputil.HTTPfile对象(文件上传)
+#index.py
+class PostFileHandler(RequestHandler):
+    def get(self,*args,**kwargs):
+        self.render('postfile.html')
+    def post(self,*args,**kwargs):
+        name=self.get_body_argument('username')
+        passwd=self.get_body_argument('passwd')
+        hobbyList=self.get_body_arguments('hobby') #取复选框多个
+        print(name,passwd,hobbyList)
+        self.write('sunck is a handsome man')
+#结果：dahaigu jibuzhu555 ['power', 'money']
+```
+
+#### 4. 即可以获取get请求，也可以获取post请求
+
+- **使用函数:name=self.get_argument(name,default=ARG_DEFAULT,strip=True)**
+- **多选使用:name_list=self.get_arguments(name,strip=True)**
+- **注意：一般不会这么使用，无法区分请求方式**
+
+### request对象
+
+**属性参数**：
+
+1. method	http请求的方式
+2. host	被请求的主机
+3. uri   请求的完整资料地址，包括路径和get查询参数部分
+4. path    请求的路径部分
+5. query   请求参数部分
+6. version   使用的htttp版本
+7. headers   请求的协议头，是一个字典类型
+8. body    请求体数据，post请求才有
+9. remote_ip   客户端的ip
+10. files    用户上传的文件，字典类型
+
+- 实例
+
+```Python
+#url:	http://127.0.0.1:9000/zhuyin?a=1&b=2
+class ZhuyingHandler(RequestHandler):
+    def get(self,*args,**kwargs):
+        print('method',self.request.method)
+        print('host',self.request.host)
+        print('url',self.request.uri)
+        print('path',self.request.path)
+        print('query',self.request.query)
+        print('version',self.request.version)
+        print('headers',self.request.headers)
+        print('body',self.request.body)
+        print('remote_ip',self.request.remote_ip)
+        print('files',self.request.files)
+        self.write('zhuyin is a good women')
+```
+
+- 输出结果
+
+```txt
+method GET
+host 127.0.0.1:9000
+url /zhuyin?a=1&b=2
+path /zhuyin
+query a=1&b=2
+version HTTP/1.1
+headers Host: 127.0.0.1:9000
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3
+Accept-Encoding: gzip, deflate, br
+Accept-Language: zh-CN,zh;q=0.9
+
+body b''	#没有post请求
+remote_ip 127.0.0.1
+files {}	#没有文件上传，具体看下面
+	{name1:[tornado.httputil.HTTPfile对象,tornado.httputil.HTTPfile对象],name2:[ tornado.httputil.HTTPfile对象,..]}
+	name为前端input表情的name属性名
+```
+
+### tornado.httputil.HTTPfile对象(文件上传)
+
+- **作用：是接受到的文件对象**
+- **属性：**
+
+1. filename  上传文件的实际名，用于创建本地文件名
+2. body  文件的数据实体,将body属性写入文件中保存到本地
+3. content_type   文件类型,多用于判断上传文件类型是否正确
+
+实例
+
+```html
+//前端输入 upfile.html
+<form method="post" action="/upfile" enctype="multipart/form-data">
+        <input type="file" name="file">
+        <input type="file" name="file">
+        <input type="file" name='img'>
+        <input type="submit" value="上传">
+    </form>
+```
+
+```python
+#application.py	
+(r'/upfile',index.UpFileHandler)
+```
+
+```python
+#index.py
+class UpFileHandler(RequestHandler):
+    def get(self,*args,**kwargs):
+        self.render('upfile.html')
+    def post(self,*args,**kwargs):
+        filesDict=self.request.files
+		print(filesDict)	#打印request.files属性
+'''
+{
+	'file': [	#键值file为input的name值，
+		{	#字典value值为一个列表，里面是每个文件的 tornado.httputil.HTTPfile对象
+			#每个对象都是有3个属性，'filename','body','content_type'
+			'filename': '1.txt', 			
+			'body': b'hhahhaa\n', 
+			'content_type': 'text/plain'
+		}, {
+			'filename': '1 2.txt', 'body': b'', 
+			'content_type': 'text/plain'
+		}	], 
+	'img': [
+		{
+			'filename': '1 3.png', 
+			'body': b'', 
+			'content_type': 'image/png'
+		}
+	]
+}
+'''        #遍历request.file键值
+        for inputname in filesDict:
+        	#取出相应的文件（tornado.httputil.HTTPfile对象）列表
+            fileArr=filesDict[inputname]
+            for fileObject in fileArr:
+                import os
+                import config
+                #创建存储路径,可以通过'对象名.属性'的方式取出属性值
+                filePath=os.path.join(config.BASE_DIRS,'upfile/'+fileObject.filename)
+                #存储到本地
+                with open(filePath,'wb') as f:
+                    #通过存储body里的数据来把数据存储到本地文件
+                    f.write(fileObject.body)
+        self.write('ok')
+```
+
+## 响应
+
+### write
+
+- **原型：self.write(chunk)**
+- **作用：将chunk数据写到输出缓冲区**
+
+**1. cookie：多次连续发送self.write(data)，先存放在客户端缓存中，服务器响应结束，客户端是一次接受全部**
+
+- self.finish()
+  1. 刷新缓存区，关闭当次请求通道
+  2. 在finish()下面不要再写write，报错：RuntimeError: Cannot write() after finish()
+
+```python
+#write
+class WriteHandler(RequestHandler):
+    def get(self,*args,**kwargs):
+        self.write('good')
+        self.write('nice')
+        self.write('handsome')
+        self.write('man')
+        self.finish()
+        #下面写了报错
+        self.write('right')
+```
+
+- 浏览器打印结果
+
+```
+goodnicehandsomeman
+//全部记在一起，self.finish()下面的没有打印，其实服务器已经报错
+```
+
+#### 利用write方式写json数据
+
+- 正常写法json
+
+```Python
+#application.py
+class Json1Handler(RequestHandler):
+    def get(self,*args,**kwargs):
+        per={
+            'name':'sunck',
+            'age':18,
+            'height':175,
+            'weight':70
+        }
+        import json
+        jsonStr=json.dumps(per)
+        self.write(jsonStr)
+```
+
+- write直接发送json数据
+
+```Python
+#application.py
+class Json2Handler(RequestHandler):
+    def get(self,*args,**kwargs):
+        per={
+            'name':'sunck',
+            'age':18,
+            'height':175,
+            'weight':70
+        }
+        self.write(per)
+```
+
+- 注意：自己手动序列化json方式Content-Type属性值为text/html.而采用write自动序列化方式，Content-Type属性值为application/json，**推荐使用第二种方法**
+
+### set_header(name,value)
+
+- 作用：手动设置一个名为name，值为value的响应头字段
+- 参数：
+  1. name:字段名称
+  2. value:字段值
+- 可以修改一些原来的响应头数据（抓包看不到？？），也可以自定义新的
+
+- 实例
+
+```python
+#application.py 用上面write第一个例子
+class Json1Handler(RequestHandler):
+    def get(self,*args,**kwargs):
+        per={
+           'name':'sunck','age':18,'height':175,'weight':70
+        }
+        import json
+        jsonStr=json.dumps(per)
+        #修改原有属性
+        self.set_header('Content-Type','application/json;charset=utf-8')
+        #自定义响应头属性
+        self.set_header('sunck','hhgood')
+        self.write(jsonStr)
+```
+
+### set_default_headers()
+
+- 作用：在进入http响应处理（get,post...）方法之前被调用,可以重写改方法来预先设置默认的headers
+- 注意：在Http处理方法中使用set_header设置的字段会覆盖set_default_headers()里面的默认字段的值
+- 实例
+
+```Python
+#application.py
+class HeaderHandler(RequestHandler):
+    #重写，里面设置在默认响应头适用于整个类，每个http处理方法
+    def set_default_headers(self):
+        #同样在里面使用self.set_header()方法设置
+        self.set_header('Content-Type','text/html;charset=utf-8')
+         self.set_header('kaige','nice')
+    def get(self,*args,**kwargs):
+        #因为http处理方法是后执行，所以这里的设置会覆盖上面的
+        self.set_header('kaige','handsome')
+        self.write('good nice')
+    def post(self,*args,**kwargs):
+        pass
+```
+
+### self.set_status(status_code,reason=None)
+
+- 作用：为响应设置状态码,可以自定义状态码,或者修改原有状态码的描述
+- 参数：
+  1. status_code:状态码值：为intl类型，
+     - 如果reason的值为None，则状态码必须为正常值(非自定义)，正常值自带reason值，比如404，not found,，不然就报错
+  2. reason:描述状态码的词组，string类型
+
+- 实例
+
+```Python
+#application.py 	状态码
+class StatusCodeHandler(RequestHandler):
+    def get(self,*args,**kwargs):
+        self.set_status(200,'我是谁，我在哪里')
+        self.write('88888888888888888888888888')
+```
+
+### 重定向 self.redirect(url)
+
+- 作用：重定向到url
+- 实例
+
+```python
+#application.py 	重定向
+class RedirectHandler(RequestHandler):
+    def get(self,*args,**kwargs):
+        self.redirect('/')
+```
+
+### 响应错误
+
+#### self.send_error(status_code=500,**kwargs)
+
+- 作用：抛出http错误状态码，默认为500，抛出错误后tornado会调用write_error()方法进行处理，并返回给浏览器错误界面,
+- 对应django 404 界面，这个方法就是定义错误也没
+- 注意：在send_error之后就不要有响应输出了(self.write())
+- 实例在下面
+
+#### wirte_error(status_code,**kwargs)
+
+- 作用：用来处理send_error抛出的错误信息（状态码），根据错误状态码，返回相对的响应给浏览器错误界面
+
+```python
+#application.py		错误处理
+class ErrorHandler(RequestHandler):
+    #根据错误
+    def write_error(self, status_code, **kwargs):
+        if status_code==500:
+            code=500
+            #返回500界面（自定义）
+            self.write('服务器内部错误')
+        elif status_code==404:
+            code=404
+            #返回404界面(自定义)
+            self.write('资料不存在')
+        self.set_header(status_code)#定义状态码，告知浏览器发生错误
+    def get(self,*args,**kwargs):
+        #通过flag码来调试错误页面
+        flag=self.get_query_argument('flag')
+        if flag== '0':
+            #执行self.send_error()就跳到self.write_error方法
+            self.send_error(500)#50
+            0这个参数是自己定义的
+            self.write('error')#这段代码永远无法执行
+        self.write('you are right')
+```
