@@ -102,8 +102,8 @@ tornado为我们提供了一个tornado.options 模块
 功能：全局的options对象，所有定义的选项变量都会作为给对象的属性
        
 
-实例：
-       
+- 实例： 
+
        ```python
        #server04.py 上面定义的变量 
        httpServer.bind(tornado.options.options.port)
@@ -242,10 +242,10 @@ if __name__=='__main__':
 
 ### settings变量
 
-#### **debug**
+**debug**
 
-作用：设置tornado是否工作在调试模式下，默认为False即工作在生产模式下
-True特性：
+- 作用：设置tornado是否工作在调试模式下，默认为False即工作在生产模式下
+- True特性：
 
   		1. 自动重启:
        - tornado应用会监控源代码文件，当有保存改动时就重新启动服务器，减少手动启动的次数，提高开发效率.
@@ -260,13 +260,17 @@ True特性：
 4. 提供追踪信息(不用太注意)
     - 可以通过serve_traceback=True设置
 
-#### **static_path**
+**static_path**
 
-作用：设置静态文件目录
+- 作用：设置静态文件目录
 
-#### **template_path**
+**template_path**
 
-作用：设置模板文件的目录
+- 作用：设置模板文件的目录
+
+**autoescape**
+
+- 作用：当为None时关闭当前项目的自动转义，一般不建议使用
 
 ### 路由
 
@@ -482,8 +486,9 @@ Accept-Language: zh-CN,zh;q=0.9
 body b''	#没有post请求
 remote_ip 127.0.0.1
 files {}	#没有文件上传，具体看下面
-	{name1:[tornado.httputil.HTTPfile对象,tornado.httputil.HTTPfile对象],name2:[ tornado.httputil.HTTPfile对象,..]}
-	name为前端input表情的name属性名
+================================================================================
+files一般格式：{name1:[tornado.httputil.HTTPfile对象,tornado.httputil.HTTPfile对象],name2:[ tornado.httputil.HTTPfile对象,..]}
+####name为前端input表情的name属性名
 ```
 
 ### tornado.httputil.HTTPfile对象(文件上传)
@@ -495,7 +500,7 @@ files {}	#没有文件上传，具体看下面
 2. body  文件的数据实体,将body属性写入文件中保存到本地
 3. content_type   文件类型,多用于判断上传文件类型是否正确
 
-实例
+- **实例**
 
 ```html
 //前端输入 upfile.html
@@ -521,8 +526,8 @@ class UpFileHandler(RequestHandler):
         filesDict=self.request.files
 		print(filesDict)	#打印request.files属性
 '''
-{
-	'file': [	#键值file为input的name值，
+{	#键值file为input的name值，
+	'file': [ 
 		{	#字典value值为一个列表，里面是每个文件的 tornado.httputil.HTTPfile对象
 			#每个对象都是有3个属性，'filename','body','content_type'
 			'filename': '1.txt', 			
@@ -544,11 +549,12 @@ class UpFileHandler(RequestHandler):
         for inputname in filesDict:
         	#取出相应的文件（tornado.httputil.HTTPfile对象）列表
             fileArr=filesDict[inputname]
+            #遍历（tornado.httputil.HTTPfile对象）列表
             for fileObject in fileArr:
                 import os
                 import config
                 #创建存储路径,可以通过'对象名.属性'的方式取出属性值
-                filePath=os.path.join(config.BASE_DIRS,'upfile/'+fileObject.filename)
+             filePath=os.path.join(config.BASE_DIRS,'upfile/'+fileObject.filename)
                 #存储到本地
                 with open(filePath,'wb') as f:
                     #通过存储body里的数据来把数据存储到本地文件
@@ -563,9 +569,9 @@ class UpFileHandler(RequestHandler):
 - **原型：self.write(chunk)**
 - **作用：将chunk数据写到输出缓冲区**
 
-**1. cookie：多次连续发送self.write(data)，先存放在客户端缓存中，服务器响应结束，客户端是一次接受全部**
+**cookie：多次连续发送self.write(data)，先存放在客户端缓存中，服务器响应结束，客户端是一次接受全部**
 
-- self.finish()
+- **self.finish()**
   1. 刷新缓存区，关闭当次请求通道
   2. 在finish()下面不要再写write，报错：RuntimeError: Cannot write() after finish()
 
@@ -740,3 +746,362 @@ class ErrorHandler(RequestHandler):
             self.write('error')#这段代码永远无法执行
         self.write('you are right')
 ```
+
+## 接口调用顺序
+
+### 方法
+
+- **initialize()**
+    **作用**：获取路由中{}传递的参数，并设置成对象属性
+
+- **prepare()**
+    **作用**：预处理方法，在执行对应的（http）请求方法之前调用（类似中间件）
+    **注意**：任何一种http请求都会执行prepare方法
+
+- **http方法**
+
+    1. get
+        优点：速度快效率高，不安全，数据量小
+    2. post
+        - 特点：将请求的数据单独打包
+        - 优点：所能承载的数据量大，安全
+        - 缺点：效率低，速度满
+        - 适用场景：涉及到修改服务器上的数据，一般用post，其他使用get
+    3. head
+        定义：类似get请求，不过响应中没有具体内容，用户获取报头的
+
+    4. delete
+        定义：请求服务器删除指定的资源
+    5. put
+        定义：从客户端向服务器传送指定的内容
+    6. patch
+        定义：修改局部内容
+    7. options
+        定义：返回url支持的所有http方法
+
+- **set_default_headers()**
+
+- **write_error()**
+    上面有
+
+- **on_finish()**
+    **作用：**在请求处理结束后调用，在该方法中进行一个资源的清理释放，或者日志处理
+    **注意：**尽量不要在该方法中进行响应输出
+
+### 顺序
+
+实例代码
+
+```Python
+#project03 index.py
+class IndexHandler(RequestHandler):
+    def get(self,*args,**kwargs):
+        print('http方法')
+        #报错调试时打开
+        #self.send_error(500) 
+        self.write('good man')
+    def prepare(self,*args,**kwargs):
+        print('prepare')
+    	self.write('very very man')
+    def initialize(self,*args,**kwargs):
+        print('initialize')
+    def set_default_headers(self,*args,**kwargs):
+        print('set_defualt_headers')
+    def on_finish(self,*args,**kwargs) -> None:
+        print('on_finish')
+    def write_error(self, status_code,*args, **kwargs):
+        print('write error')
+        self.write('服务器内部错误')
+```
+
+- 在正常情况未抛出错误时
+
+```python
+set_defualt_headers
+initialize
+prepare
+http方法
+on_finish
+
+浏览器页面:#very very mangood man            
+prepare和http方法中的write方法都执行了
+```
+
+- 在抛出错误时
+
+```Python
+set_defualt_headers
+initialize
+prepare
+http方法
+set_defualt_headers#发生错误，重新执行设置默认响应头
+write error
+on_finish
+
+浏览器页面：#服务器内部错误
+```
+
+**注意：**如果在prepare中设置self.send_error()方法，则http方法就不会执行了 
+
+# 模板
+
+### **配置模板路径**
+
+```python
+#config.py
+#配置,'template_path'就是模板路径
+settings={
+    'template_path':os.path.join(BASE_DIRS,'templates'),
+}
+```
+
+### **渲染并返回给客户端**
+
+- 使用**self.render(html)**方法
+
+```python
+#project03 index.py
+class HomeHandler(RequestHandler):
+    def get(self,*args,**kwargs):
+        self.render('home.html')
+```
+
+### **传输变量与表达式**
+
+- **前端语法：**
+    1. 变量{{var}}
+    2. 表达式{{expression}}
+    3. 字典对象{{dict["key"]}}
+
+- **后端方法表达式：**
+    - **self.render(html,name1=value1,name2=value2,.....)**
+
+```Python
+#project03 index.py
+class HomeHandler(RequestHandler):
+    def get(self,*args,**kwargs):
+        temp=100
+        dict={'name':'tom','age':18}
+        self.render('home.html',num=temp,per=dict)
+```
+
+- 模板html文件
+
+```html
+//templates.home.html
+	<h1>这里是home页面</h1>
+    <h1>num:{{ num }}</h1>
+    <h1>num+10:{{ num + 10}}</h1>	//做加法运算
+    <h1>num:{{ num }}</h1>
+	<h1>name:{{ per['name']}}</h1>
+```
+
+- 浏览器显示结果
+
+```
+这里是home页面
+num:100
+num+10:110
+num:100
+name:tom
+```
+
+### 前端模板流程控制
+
+#### if
+
+- 格式
+
+```html
+{% if 表达式1 %}
+	语句1
+{% elif 表达式2 %}
+	语句2
+{% else %}
+	语句3
+{% end %}
+```
+
+#### for
+
+- 格式
+
+```
+{% for 变量 in 集合 %}
+	循环语句
+{% end %}
+```
+
+#### while
+
+- 用的少
+
+### 模板函数
+
+#### static_url()
+
+- **作用**：静态文件路径拼接,实际路径和settings中‘static_path’有关，就是在修改settings中‘static_path’值的情况下，不需要修改模板的静态文件链接路径
+- **格式**：**href="{{static_url('css/home.css')}}"**
+- **优点：**
+    1. 修改目录不需要修改url
+    2. static_url创建了一个基于文件内容的hash值，并将其添加到URL末尾（当一个查询参数），这个hash值总能保证加载的都是最新文件,而不是以前的缓存版本，每次加载都是服务器新传入的，这个特性无论特性无论是开发阶段还是上线阶段都是很有用的(**重要**)
+
+#### 自定义函数
+
+- 定义：在后端定义一个函数，然后将函数名传到前端，前端直接使用”函数名(参数)“调用
+- 格式：**{{  fun(name1,name2)  }}**
+- 实例
+
+```python
+#project03.index.py		自定义函数
+class FunctionHandler(RequestHandler):
+    def get(self,*args,**kwargs):
+        def mySum(n1,n2):
+            return n1+n2
+        self.render('home.html',mySum=mySum) 
+```
+
+- 前端页面
+
+```html
+ <h1>{{ mySum(100,89) }}</h1>
+```
+
+- 浏览器显示结果
+
+```
+189
+```
+
+### 转义
+
+- 定义：tornado默认是开启自动转义功能，能**防止网站受到恶意攻击**，不会渲染传递的后端字符串
+- 关闭自动转义
+    1. raw  
+        - 格式：{% raw str %}
+        - 只能关闭一行
+    2.  autoescape None
+        - 格式：{%   autoescape None  %}
+        - 关闭当前html文档的自动转义，不管这句话的位置在哪
+    3. 在配置中修改（一般很少使用）
+        - 格式：config.py	==>	settings  =  {  'autoescape':None  }
+        - 关闭整个服务器的自动转义
+    4. escape()函数
+        - 作用：在关闭自动转义后可以使用该方法对特定的变量进行转义
+
+- 实例
+
+```python
+class TransHandler(RequestHandler):
+    def get(self,*args,**kwargs):
+        str='<h1>sunck is a good man </h1>'
+        self.render('trans.html',str=str) 	
+```
+
+前端模板代码
+
+```html
+//情况一
+{{ str }}
+{% raw str %}
+==============================
+//情况二
+{% autoescape None %}
+{{ str }}
+{{ escape(str)}}
+{{ str }}
+```
+
+结果显示
+
+```
+#情况一页面
+<h1>sunck is a good man </h1>
+sunck is a good man
+===================================
+#情况二页面
+sunck is a good man
+<h1>sunck is a good man </h1>
+sunck is a good man
+```
+
+### 继承
+
+和django差不多
+
+- 父模板
+
+```
+//project03.templates.base.html
+{% block main %}
+
+{% end %}
+```
+
+- 子模板
+
+```
+//project03.templates.cart.html
+{% extends 'base.html'%}
+{% block main %}
+<h1>这里是购物车页面</h1>
+{% end %}
+```
+
+### 取静态文件
+
+1. **static_path**
+    - 作用：告诉tornado从文件系统中的某个特定的位置提供静态文件（静态首页）
+    - 引入文件：**href="{{  static_url('css/home.css')  }}"**
+    - 请求方式：取project03.static.html.index.html文件，浏览器输入：http://127.0.0.1:8000/static/html/index.html
+    - 实例
+
+```python
+#config.py
+settings={
+    'static_path':os.path.join(BASE_DIRS,'static')
+    }
+```
+
+2. **StaticFileHandler**
+    - 使用原因：因为“http://127.0.0.1:8000/static/html/index.html“对于用户来说体验不佳
+    - 本质：是tornado预制的用来提供静态资源文件的handler
+    - 作用：可以通过**tornado.web.StaticFileHandler** 来映射静态文件
+    - 使用：**tornado.web.StaticFileHandler(path,default_filename)**方法，只要在URL那里写好就行，不用重写
+        - 参数：
+            - path:用来指定静态文件的根路径，url传递过来的文件名与路径下的文件名匹配，比如index.html
+            - default_filename:用来指定访问路由中未指明文件名时，默认提供的静态文件
+    - 注意：写在最后在路由配置的最后面，不然就会是其他路由无法匹配，用（r'/(.*)$'）同时替换原来（r'/'）主页路由，前提是要有首页静态文件
+    - 实例：
+
+```Python
+#application.py
+#StaticFielHandler要放在所有路由的最下面
+
+(r'/(.*)$',tornado.web.StaticFileHandler,{"path":os.path.join(config.BASE_DIRS,'static/html'),'default_filename':'index.html'})
+```
+
+- 实现效果
+
+```python
+取project03.static.html.index.html
+传统方式
+浏览器输入：http://127.0.0.1:8000/static/html/index.htm
+
+改进方式一
+URL:(r'/(.*)$',tornado.web.StaticFileHandler{"path":os.path.join(config.BASE_DIRS,'static/html')})
+浏览器输入：http://127.0.0.1:8080/index.html
+
+改进方式二
+URL：
+ (r'/(.*)$',tornado.web.StaticFileHandler,{"path":os.path.join(config.BASE_DIRS,'static/html'),'default_filename':'index.html'})
+浏览器输入：http://127.0.0.1:8080/index.html
+       	http://127.0.0.1:8080
+
+```
+
+# 数据库
+
+概述：tronado没有自带的ORM,对于数据库需要自己来适配
+目前python3.6+ tornado还没有完善的驱动
+连接
