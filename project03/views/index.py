@@ -53,10 +53,16 @@ class CartHandler(RequestHandler):
 
 
 # 数据库
+
+from models import Students
+
 class StudentHandler(RequestHandler):
     def get(self, *args, **kwargs):
-        # 去数据库提取数据
-        stus = self.application.db.get_all_obj('select * from students','students')
-        print(stus)
+        # 去数据库提取数据1
+        # self.application.db.insert('insert into students (name,age) values("dahaigui",30)')
+        # stus = self.application.db.get_all_obj('select * from students','students')
+        s=Students('qq',60)
+        s.save()
+        # print(stus)
         self.write('ok')
         # self.render('students.html', stus=stus)

@@ -2,7 +2,7 @@ import tornado.web
 from views import index
 import config
 import os
-from sunckMysql import SunckMySQL
+from ORM.sunckMysql import SunckMySQL
 
 class Application(tornado.web.Application):
     def __init__(self):

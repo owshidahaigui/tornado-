@@ -44,6 +44,13 @@ class SunckMySQL():
 
     #推荐使用，返回字典列表
     def get_all_obj(self, sql, tableName, *args):
+        '''
+
+        :param sql:SQL查询语句
+        :param tableName:
+        :param args:当sql语句中查询字段不是* ，查询特定某几个字段时，就要把字段名称放到函数参数中传过来，这个args就是给这些字段名的元组
+        :return:字典列表
+        '''
         reslist = []
         fieldsList = []
         if (len(args) > 0):
