@@ -19,5 +19,7 @@ settings = {
     'static_path': os.path.join(BASE_DIRS, 'static'),
     'template_path': os.path.join(BASE_DIRS, 'templates'),
     'debug': True,  # 修改代码，自动重启服务
-    'cookie_secret':'qzEK3FRNRDuUtz0NoL1FMH7Rr8A1KkTIv81BkdsCkvI='
+    'cookie_secret':'qzEK3FRNRDuUtz0NoL1FMH7Rr8A1KkTIv81BkdsCkvI=',
+     'xsrf_cookies':True,
+    'login_url':'/login'
 }

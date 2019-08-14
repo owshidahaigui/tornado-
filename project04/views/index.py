@@ -1,26 +1,10 @@
 from tornado.web import RequestHandler
-class IndexHandler(RequestHandler):
-    def get(self, *args, **kwargs):
-        print('http方法')
-        self.send_error(500)
-        self.write('good man')
+import tornado.web
 
-    def prepare(self, *args, **kwargs):
-        print('prepare')
-        self.write('very very man')
-
-    def initialize(self, *args, **kwargs):
-        print('initialize')
-
-    def set_default_headers(self, *args, **kwargs):
-        print('set_defualt_headers')
-
-    def on_finish(self, *args, **kwargs) -> None:
-        print('on_finish')
-
-    def write_error(self, status_code, *args, **kwargs):
-        print('write error')
-        self.write('服务器内部错误')
+class StaticFileHandler(tornado.web.StaticFileHandler):
+    def __init__(self,*args,**kwargs):
+        super(StaticFileHandler,self).__init__(*args,**kwargs)
+        self.xsrf_token
 #cookie
 class PCookieHandler(RequestHandler):
     def get(self,*args,**kwargs):
@@ -59,12 +43,58 @@ class GetSCookieHandler(RequestHandler):
 class CookieNumHandler(RequestHandler):
     def get(self,*args,**kwargs):
         count=self.get_cookie('count',None)
-        print(type(count),count)
+        if not count:
+            count=1
+        self.set_cookie('count',str(count).encode())
+        self.render('cookienum.html',count=count)
+
+class PostFileHandler(RequestHandler):
+    def get(self,*args,**kwargs):
+
+        self.render('postfile.html')
+    def post(self,*args,**kwargs):
+        count = self.get_cookie('count', None)
         if not count:
             count=1
         else:
             count=int(count)
             count+=1
-        print(count)
         self.set_cookie('count',str(count))
-        self.render('cookienum.html',count=count)
+        self.redirect('/cookienum')
+
+class SetXSRFCookieHandler(RequestHandler):
+    def get(self,*args,**kwargs):
+        #设置_xsrf的cookie
+        self.xsrf_token
+        self.finish('ok')
+
+#用户验证
+class LoginHandler(RequestHandler):
+    def get(self,*args,**kwargs):
+        next=self.get_argument('next','/')
+        self.render('login.html',url=next)
+    def post(self,*args,**kwargs):
+        name=self.get_body_argument('username')
+        pawd=self.get_body_argument('passwd')
+        if name=='1' and pawd=='1':
+            next=self.get_argument('next','/')
+            self.redirect(next+'?flag=logined')
+        else:
+            next = self.get_argument('next', '/')
+            self.redirect('/login?next='+next)
+
+class HomeHandler(RequestHandler):
+    def get_current_user(self):
+        flag=self.get_argument('flag',None)
+        return flag
+    @tornado.web.authenticated
+    def get(self,*args,**kwargs):
+        self.render('home.html')
+
+class CartHandler(RequestHandler):
+    def get_current_user(self):
+        flag=self.get_argument('flag',None)
+        return flag
+    @tornado.web.authenticated
+    def get(self,*args,**kwargs):
+        self.render('cart.html')
