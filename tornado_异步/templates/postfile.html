@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+        <button onclick="login()">点击</button>
+    <script type="text/javascript" charset="utf-8" src="{{ static_url('js/jquery.js') }}"></script>
+    <script>
+
+        function getCookie(name) {
+            var cook=document.cookie.match('\\b'+name+'=([^:]*)\\b')
+            return cook ?cook[1]:undefined
+        }
+        function login() {
+            console.log('hh');
+               var data1={
+                    'username':'sunck',
+                    'passwd':'123456',
+                };
+                var datastr=JSON.stringify(data1);
+                $.ajax({
+                    url:'/postfile',
+                    method:'POST',
+                    data:data1,
+                    success:function (data) {
+                        alert('ok')
+                    },
+                    headers:{
+                        'X-XSRFToken':getCookie('_xsrf')
+                    }
+                })
+        }
+
+    </script>
+</body>
+</html>

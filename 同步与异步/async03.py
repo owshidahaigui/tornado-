@@ -15,8 +15,19 @@ def longIo():
     # run()
     #创建一个线程进行异步操作
     threading.Thread(target=run).start()
+    print('多线程')
+
+#定义运行生成器的装饰器
+def genCoroutine(func):
+    def wrapper(*args,**kwargs):
+        global gen
+        gen = func()  # 生成一个生成器
+        next(gen)  # 执行reqA
+    return  wrapper
+
 
 # 一个客户端的请求
+@genCoroutine
 def reaA():
     print('开始处理reqA')
     res= yield longIo()
@@ -31,9 +42,7 @@ def reaB():
 
 # tornado服务
 def main():
-    global gen
-    gen=reaA()#生成一个生成器
-    next(gen)#执行reqA
+    reaA()
     reaB()
 if __name__ == '__main__':
     main()

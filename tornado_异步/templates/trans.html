@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>转义</title>
+</head>
+<body>
+        {{ str }}
+        {% autoescape None %}
+        {{ escape(str) }}
+        {{ str }}
+{#    {% raw str %}#}
+</body>
+</html>
